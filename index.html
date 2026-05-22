@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es-PE">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inventario Perú - Acceso con contraseña maestra</title>
+  <meta name="description" content="Inventario privado protegido con contraseña maestra." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="masterPasswordModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 id="modalTitle">🔐 Acceso restringido</h2>
+      <p id="modalMessage">Ingresa la contraseña maestra para continuar</p>
+      <input type="password" id="masterPasswordInput" placeholder="Contraseña maestra" />
+      <div class="buttons-row" style="justify-content: center; margin-top: 20px;">
+        <button id="submitMasterPasswordBtn">Aceptar</button>
+      </div>
+      <p id="masterPasswordError" class="message" style="margin-top: 15px;">Contraseña incorrecta.</p>
+    </div>
+  </div>
+
+  <main id="mainContent" style="display: none;">
+    <section class="hero">
+      <div>
+        <h1>Inventario Perú</h1>
+        <p class="subtitle">Sistema privado de inventario. Acceso con contraseña maestra.</p>
+      </div>
+      <div class="hero-buttons">
+        <button id="notificationsBtn" class="notification-btn">
+          🔔 Notificaciones <span id="notificationBadge" class="badge" style="display: none;">0</span>
+        </button>
+      </div>
+    </section>
+
+    <div id="notificationsPanel" class="notifications-panel hidden">
+      <h3>Notificaciones e Invitaciones</h3>
+      <div id="notificationsList">
+        <p>No tienes notificaciones.</p>
+      </div>
+    </div>
+
+    <section class="auth-container">
+      <div id="loginSection" class="auth-card">
+        <h2>Iniciar Sesión</h2>
+        <div class="form-group">
+          <label for="username">Usuario</label>
+          <input type="text" id="username" placeholder="Ingresa tu usuario" />
+        </div>
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" placeholder="••••••••" />
+        </div>
+        <button id="loginBtn" class="full-width">Ingresar</button>
+        <p id="authMessage" class="message"></p>
+        <div class="auth-links">
+          <a href="#" id="showRegisterBtn">¿No tienes cuenta? Regístrate</a>
+          <a href="#" id="forgotPasswordBtn">¿Olvidaste tu contraseña?</a>
+        </div>
+      </div>
+
+      <div id="registerSection" class="auth-card hidden">
+        <h2>Crear Cuenta</h2>
+        <div class="form-group">
+          <label for="regUsername">Usuario</label>
+          <input type="text" id="regUsername" placeholder="Solo letras y números" />
+        </div>
+        <div class="form-group">
+          <label for="regEmail">Correo electrónico</label>
+          <input type="email" id="regEmail" placeholder="ejemplo@correo.com" />
+        </div>
+        <div class="form-group">
+          <label for="regPassword">Contraseña</label>
+          <input type="password" id="regPassword" placeholder="Mínimo 6 caracteres" />
+        </div>
+        <button id="confirmRegisterBtn" class="full-width">Registrarme</button>
+        <button id="cancelRegisterBtn" class="full-width secondary">Cancelar</button>
+        <p id="regMessage" class="message"></p>
+      </div>
+
+      <div id="recoverySection" class="auth-card hidden">
+        <h2>Recuperar Contraseña</h2>
+        <p class="info-text">Ingresa tu correo registrado para iniciar la recuperación.</p>
+        
+        <div class="form-group">
+          <label for="recoveryEmail">Correo electrónico</label>
+          <input type="email" id="recoveryEmail" placeholder="ejemplo@correo.com" />
+        </div>
+
+        <div id="resetArea" class="hidden">
+          <div class="form-group">
+            <label for="recoveryCode">Código de verificación</label>
+            <input type="text" id="recoveryCode" placeholder="Código de 6 dígitos" />
+          </div>
+        </div>
+
+        <div id="newPasswordArea" class="hidden">
+          <div class="form-group">
+            <label for="newPassword">Nueva contraseña</label>
+            <input type="password" id="newPassword" placeholder="Mínimo 6 caracteres" />
+          </div>
+        </div>
+
+        <button id="sendRecoveryBtn" class="full-width">Enviar código al correo</button>
+        <div id="verifyBtnArea" class="hidden">
+          <button id="verifyCodeBtn" class="full-width success">Verificar código y cambiar contraseña</button>
+        </div>
+        <button id="cancelRecoveryBtn" class="full-width secondary">Volver al login</button>
+        <p id="recoveryMessage" class="message"></p>
+      </div>
+    </section>
+
+    <section id="appSection" class="app-card hidden">
+      <div class="app-header">
+        <div>
+          <h2>Panel de Control</h2>
+          <p>Usuario activo: <span id="loggedUser" class="user-badge">Ninguno</span></p>
+        </div>
+        <button id="logoutBtn" class="danger">Cerrar Sesión</button>
+      </div>
+
+      <div id="adminPanel" class="admin-panel" style="display: none;">
+        <h3>👑 Panel de Administración Suprema</h3>
+        <p class="info-text">Como administrador global, puedes ver y gestionar las cuentas registradas en el sistema.</p>
+        
+        <div class="admin-grid">
+          <div class="admin-box">
+            <h4>Cambiar Contraseña Maestra del Sistema</h4>
+            <div class="form-group">
+              <label for="newMasterPassword">Nueva clave maestra</label>
+              <input type="password" id="newMasterPassword" placeholder="Mínimo 4 caracteres" />
+            </div>
+            <div class="form-group">
+              <label for="confirmMasterPassword">Confirmar nueva clave</label>
+              <input type="password" id="confirmMasterPassword" placeholder="Repite la clave" />
+            </div>
+            <button id="changeMasterPasswordBtn" class="success">Actualizar Clave Maestra</button>
+            <p id="changeMasterMsg" class="message"></p>
+          </div>
+
+          <div class="admin-box">
+            <h4>Usuarios Registrados</h4>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+              <button id="refreshUsersBtn" class="secondary" style="padding: 6px 12px; font-size: 13px;">🔄 Actualizar Lista</button>
+            </div>
+            <div id="userListAdmin" class="user-list-admin">
+              <p>Cargando lista de usuarios...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="shareSection" class="share-box" style="display: none;">
+        <h3>👥 Colaboración Compartida</h3>
+        <p id="collaboratorsList">Cargando colaboradores...</p>
+        <div class="buttons-row" style="margin-top: 10px;">
+          <button id="addCollaboratorBtn" class="success">➕ Invitar Colaborador</button>
+          <button id="manageCollaboratorsBtn" class="secondary">⚙️ Gestionar Permisos</button>
+        </div>
+      </div>
+
+      <div class="inventory-config">
+        <div id="inventorySelectorGroup" class="form-group" style="display: none; margin-bottom: 15px;">
+          <label for="inventorySelect">📂 Seleccionar Origen del Inventario:</label>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <select id="inventorySelect" style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+              <option value="personal">Mi inventario personal</option>
+            </select>
+            <button id="leaveSharedBtn" class="danger" style="display: none; padding: 8px 12px; font-size: 13px;">Salir de este inventario</button>
+          </div>
+        </div>
+
+        <div class="config-grid">
+          <div class="form-group">
+            <label for="productCount">Cantidad de productos a ingresar</label>
+            <input type="number" id="productCount" min="1" value="1" />
+          </div>
+          <div class="form-group">
+            <label for="exchangeRate">Tasa de cambio (S/. por 1 USD)</label>
+            <input type="number" id="exchangeRate" min="0.01" step="0.01" value="3.50" />
+          </div>
+        </div>
+        <button id="startAddBtn" class="primary">Iniciar ingreso de productos</button>
+      </div>
+
+      <div id="addProductArea" class="hidden">
+        <h3>Añadir productos</h3>
+        <div id="productInputs"></div>
+        <button id="saveProductsBtn">Guardar productos</button>
+        <button id="cancelAddBtn" class="secondary">Cancelar</button>
+      </div>
+
+      <div class="buttons-row">
+        <button id="showInventoryBtn">Mostrar inventario</button>
+        <button id="showSummaryBtn">Mostrar resumen y totales</button>
+      </div>
+
+      <div id="inventorySection" class="hidden">
+        <h3 id="inventoryTitle">Inventario</h3>
+        <div id="inventoryList"></div>
+      </div>
+
+      <div id="summarySection" class="hidden">
+        <h3>Resumen de inventario actual</h3>
+        <div id="summaryList"></div>
+        <p class="totals"><strong>Total S/.:</strong> <span id=\"totalSoles\">0</span></p>
+        <p class="totals"><strong>Total USD:</strong> <span id=\"totalUsd\">0</span></p>
+        
+        <h3>📜 Historial de movimientos</h3>
+        <div id="movementHistory"></div>
+      </div>
+
+      <p id="appMessage" class="message"></p>
+    </section>
+  </main>
+
+  <footer class="page-footer" id="footer" style="display: none;">
+    <p>Inventario Perú · Sistema protegido con contraseña maestra.</p>
+  </footer>
+
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/external/html.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <script src="script.js"></script>
+</body>
+</html>
