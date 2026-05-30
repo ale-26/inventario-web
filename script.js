@@ -1,4 +1,4 @@
-// Configuración de Firebase
+// ==================== CONFIGURACIÓN FIREBASE ====================
 const firebaseConfig = {
   apiKey: "AIzaSyAtjnSikSLRkJYH90qRi5BFwgnwacH_I8s",
   authDomain: "inventario-teinda-648aa.firebaseapp.com",
@@ -8,7 +8,6 @@ const firebaseConfig = {
   appId: "1:22864280682:web:e9252f456f4ad16443e693"
 };
 
-// Inicializar Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
@@ -18,7 +17,8 @@ let tasaCambio = 3.5;
 let usuarioActual = null;
 let currentInventoryOwner = null;
 let currentPermission = "edit";
-let unsubscribeInventory = null;  // para cancelar la suscripción al cerrar sesión
+let unsubscribeInventory = null;
+let adminObservingUser = null;   // modo admin observador
 
 // DOM elements
 const authMessage = document.getElementById('authMessage');
@@ -52,7 +52,7 @@ const notificationBadge = document.getElementById('notificationBadge');
 const notificationsBtn = document.getElementById('notificationsBtn');
 const movementHistoryDiv = document.getElementById('movementHistory');
 
-// Inputs login
+// Inputs
 const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');
 const regUsername = document.getElementById('regUsername');
@@ -86,12 +86,12 @@ const addCollaboratorBtn = document.getElementById('addCollaboratorBtn');
 const manageCollaboratorsBtn = document.getElementById('manageCollaboratorsBtn');
 const refreshUsersBtn = document.getElementById('refreshUsersBtn');
 
-// EmailJS (credenciales corregidas)
+// EmailJS
 const EMAILJS_SERVICE_ID = 'recuperacion';
 const EMAILJS_TEMPLATE_ID = 'template_fy0hmst';
 const EMAILJS_PUBLIC_KEY = 'izdpmjIVDCrGNcfGS';
 
-// ==================== MODAL CONTRASEÑA MAESTRA ====================
+// ==================== MODAL MAESTRA ====================
 const modalOverlay = document.getElementById('masterPasswordModal');
 const mainContent = document.getElementById('mainContent');
 const footer = document.getElementById('footer');
@@ -117,18 +117,11 @@ async function verifyMasterPassword(password) {
 
 async function handleMasterPasswordFlow() {
   await ensureAdminUser();
-
   const doc = await db.collection("config_sistema").doc("clave_maestra").get();
-  if (!doc.exists) {
-    await setMasterPassword('admin123');
-    console.log('Firebase: Llave maestra inicial establecida en admin123');
-  }
-  
+  if (!doc.exists) await setMasterPassword('admin123');
   modalTitle.textContent = '🔐 Acceso restringido';
   modalMessage.textContent = 'Ingresa la contraseña maestra para continuar';
   masterPasswordInput.placeholder = 'Contraseña maestra';
-  submitMasterPasswordBtn.textContent = 'Aceptar';
-  
   submitMasterPasswordBtn.onclick = async () => {
     const pass = masterPasswordInput.value;
     if (await verifyMasterPassword(pass)) {
@@ -166,7 +159,7 @@ function generateUniqueId() {
 }
 
 async function hashString(texto) {
-  if (!window.crypto || !window.crypto.subtle) throw new Error('Crypto API no disponible.');
+  if (!window.crypto || !window.crypto.subtle) throw new Error('Crypto API no disponible');
   const encoder = new TextEncoder();
   const data = encoder.encode(texto);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
@@ -183,31 +176,23 @@ function escapeHtml(str) {
   return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
 }
 
-// ==================== HISTORIAL DE MOVIMIENTOS ====================
+// ==================== HISTORIAL ====================
 async function registrarMovimiento(owner, tipo, producto, detalle) {
   await db.collection("movimientos").add({
-    owner,
-    id: generateUniqueId(),
-    fecha: new Date().toLocaleString(),
-    tipo,
-    producto,
-    detalle
+    owner, id: generateUniqueId(), fecha: new Date().toLocaleString(), tipo, producto, detalle
   });
 }
 
 async function mostrarHistorial(owner) {
   if (!movementHistoryDiv) return;
-  const snapshot = await db.collection("movimientos")
-                           .where("owner", "==", owner)
-                           .get();
+  const snapshot = await db.collection("movimientos").where("owner", "==", owner).get();
   if (snapshot.empty) {
     movementHistoryDiv.innerHTML = '<p>No hay movimientos registrados.</p>';
     return;
   }
   let listaMovs = [];
   snapshot.forEach(doc => listaMovs.push(doc.data()));
-  listaMovs.sort((a,b) => b.id.localeCompare(a.id)); 
-
+  listaMovs.sort((a,b) => b.id.localeCompare(a.id));
   let html = '';
   for (const mov of listaMovs) {
     html += `<div class="movement-item"><strong>${escapeHtml(mov.fecha)}</strong><br />${escapeHtml(mov.detalle)}</div>`;
@@ -220,11 +205,7 @@ async function ensureAdminUser() {
   const adminDoc = await db.collection("usuarios").doc("admin").get();
   if (!adminDoc.exists) {
     await db.collection("usuarios").doc("admin").set({
-      nombre: 'admin',
-      email: 'admin@inventario.pe',
-      passwordHash: await hashPassword('admin123'),
-      resetCodeHash: '',
-      resetExpires: 0
+      nombre: 'admin', email: 'admin@inventario.pe', passwordHash: await hashPassword('admin123'), resetCodeHash: '', resetExpires: 0
     });
     await savePersonalInventory('admin', []);
   }
@@ -234,36 +215,63 @@ async function savePersonalInventory(username, inventory) {
   await db.collection("inventarios").doc(username).set({ productos: inventory });
 }
 
-// === NUEVO: Suscripción en tiempo real al inventario ===
 function suscribirInventario(owner) {
   if (unsubscribeInventory) unsubscribeInventory();
   const docRef = db.collection("inventarios").doc(owner);
   unsubscribeInventory = docRef.onSnapshot((doc) => {
     if (doc.exists) {
-      productos = doc.data().productos || [];
-      // Actualizar la interfaz si es necesario
-      if (!inventorySection.classList.contains('hidden')) {
-        mostrarInventario();  // refresca la lista
-      }
-      if (!summarySection.classList.contains('hidden')) {
-        mostrarResumen();
+      if (adminObservingUser === owner || (!adminObservingUser && (currentInventoryOwner === owner || owner === usuarioActual))) {
+        productos = doc.data().productos || [];
+        if (!inventorySection.classList.contains('hidden')) mostrarInventario();
+        if (!summarySection.classList.contains('hidden')) mostrarResumen();
       }
     }
   });
 }
 
-// Cargar inventario una sola vez (para casos puntuales)
 async function loadPersonalInventory(username) {
   const doc = await db.collection("inventarios").doc(username).get();
   return doc.exists ? doc.data().productos : [];
 }
 
-// ==================== COMPARTIR (PERMISOS) ====================
+// ==================== ADMIN OBSERVADOR ====================
+async function adminViewInventory(username) {
+  adminObservingUser = username;
+  currentInventoryOwner = null;
+  productos = await loadPersonalInventory(username);
+  adminPanelDiv.style.display = 'none';
+  shareSectionDiv.style.display = 'none';
+  inventorySelectorGroup.style.display = 'none';
+  inventorySection.classList.remove('hidden');
+  summarySection.classList.add('hidden');
+  addProductArea.classList.add('hidden');
+  inventoryTitle.innerHTML = `👁️ Inventario de ${escapeHtml(username)} (solo observación) <button id="exitAdminViewBtn" class="secondary" style="margin-left: 10px;">⬅️ Volver al panel admin</button>`;
+  suscribirInventario(username);
+  await mostrarInventario();
+  const exitBtn = document.getElementById('exitAdminViewBtn');
+  if (exitBtn) exitBtn.onclick = () => exitAdminView();
+}
+
+function exitAdminView() {
+  adminObservingUser = null;
+  adminPanelDiv.style.display = 'block';
+  shareSectionDiv.style.display = 'none';
+  inventorySelectorGroup.style.display = 'none';
+  cargarListaUsuariosAdmin();
+  productos = [];
+  inventorySection.classList.add('hidden');
+  summarySection.classList.add('hidden');
+  addProductArea.classList.add('hidden');
+  inventoryTitle.innerHTML = 'Inventario';
+  if (unsubscribeInventory) unsubscribeInventory();
+  unsubscribeInventory = null;
+  mostrarMensaje(appMessage, 'Has vuelto al panel de administración.', '#16a34a');
+}
+
+// ==================== COLABORACIÓN ====================
 async function getCollaboratorPermission(owner, collaborator) {
   const doc = await db.collection("shared_config").doc(owner).get();
-  if (doc.exists && doc.data()[collaborator]) {
-    return doc.data()[collaborator];
-  }
+  if (doc.exists && doc.data()[collaborator]) return doc.data()[collaborator];
   return null;
 }
 
@@ -271,16 +279,11 @@ async function setCollaboratorPermission(owner, collaborator, permission, notify
   const docRef = db.collection("shared_config").doc(owner);
   const doc = await docRef.get();
   let data = doc.exists ? doc.data() : {};
-  
   const oldPerm = data[collaborator] || null;
-  
   if (permission === null) {
     delete data[collaborator];
-    if (Object.keys(data).length === 0) {
-      await docRef.delete();
-    } else {
-      await docRef.set(data);
-    }
+    if (Object.keys(data).length === 0) await docRef.delete();
+    else await docRef.set(data);
     if (notify) {
       await addNotification(collaborator, `🔒 El usuario ${owner} ha revocado tu acceso.`, 'revoke');
       await addNotification(owner, `🔒 El colaborador ${collaborator} fue removido.`, 'revoke');
@@ -294,7 +297,6 @@ async function setCollaboratorPermission(owner, collaborator, permission, notify
       await addNotification(owner, `✏️ Permiso de ${collaborator} cambiado a "${permText}".`, 'perm_change');
     }
   }
-  
   if (collaborator === usuarioActual && currentInventoryOwner === owner) {
     await refreshCurrentPermission();
     if (currentPermission !== 'edit') mostrarMensaje(appMessage, 'Tu permiso ha cambiado.', '#f59e0b');
@@ -308,7 +310,7 @@ async function getCollaboratorsWithPermissions(owner) {
   return Object.entries(doc.data()).map(([user, perm]) => ({ user, perm }));
 }
 
-// ==================== INVITACIONES ====================
+// ==================== INVITACIONES Y NOTIFICACIONES ====================
 async function createInvitation(owner, collaborator, permission) {
   const snapshot = await db.collection("invitaciones")
                            .where("owner", "==", owner)
@@ -316,16 +318,9 @@ async function createInvitation(owner, collaborator, permission) {
                            .where("status", "==", "pending")
                            .get();
   if (!snapshot.empty) return false;
-  
   await db.collection("invitaciones").add({
-    id: generateUniqueId(),
-    owner,
-    collaborator,
-    permission,
-    status: 'pending',
-    date: new Date().toLocaleString()
+    id: generateUniqueId(), owner, collaborator, permission, status: 'pending', date: new Date().toLocaleString()
   });
-  
   await addNotification(collaborator, `📨 Invitación de ${owner} (${permission === 'edit' ? 'edición' : 'solo lectura'}).`, 'invitation');
   return true;
 }
@@ -354,15 +349,9 @@ async function declineInvitation(id) {
   return true;
 }
 
-// ==================== NOTIFICACIONES ====================
 async function addNotification(username, message, type) {
   await db.collection("notificaciones").add({
-    username,
-    id: generateUniqueId(),
-    message,
-    type,
-    date: new Date().toLocaleString(),
-    read: false
+    username, id: generateUniqueId(), message, type, date: new Date().toLocaleString(), read: false
   });
   if (usuarioActual === username) refreshNotificationBadge();
 }
@@ -383,9 +372,7 @@ async function markAsRead(username, notifId) {
                            .where("username", "==", username)
                            .where("id", "==", notifId)
                            .get();
-  if (!snapshot.empty) {
-    await snapshot.docs[0].ref.update({ read: true });
-  }
+  if (!snapshot.empty) await snapshot.docs[0].ref.update({ read: true });
   refreshNotificationBadge();
   renderNotificationsPanel();
 }
@@ -396,7 +383,6 @@ async function renderNotificationsPanel() {
   let userNotif = [];
   snapNotif.forEach(d => userNotif.push(d.data()));
   userNotif.sort((a,b) => b.date.localeCompare(a.date));
-
   let html = '';
   const snapInv = await db.collection("invitaciones")
                           .where("collaborator", "==", usuarioActual)
@@ -419,7 +405,6 @@ async function renderNotificationsPanel() {
             </div>`;
   }
   notificationsList.innerHTML = html;
-  
   document.querySelectorAll('.accept-invite').forEach(btn => {
     btn.onclick = async () => { await acceptInvitation(btn.getAttribute('data-id')); await renderNotificationsPanel(); await refreshNotificationBadge(); await actualizarSelectorInventarios(); mostrarMensaje(appMessage, 'Invitación aceptada.', '#16a34a'); };
   });
@@ -434,13 +419,8 @@ async function renderNotificationsPanel() {
 // ==================== TASA CAMBIO ====================
 async function guardarTasaCambio() {
   const v = parseFloat(exchangeRateInput.value);
-  if (!isNaN(v) && v > 0) { 
-    tasaCambio = v; 
-    await db.collection("config_sistema").doc("tasa_cambio").set({ valor: tasaCambio });
-  } else { 
-    tasaCambio = 3.5; 
-    exchangeRateInput.value = '3.50'; 
-  }
+  if (!isNaN(v) && v > 0) { tasaCambio = v; await db.collection("config_sistema").doc("tasa_cambio").set({ valor: tasaCambio }); }
+  else { tasaCambio = 3.5; exchangeRateInput.value = '3.50'; }
 }
 async function cargarTasaCambio() {
   const doc = await db.collection("config_sistema").doc("tasa_cambio").get();
@@ -452,54 +432,44 @@ async function cargarTasaCambio() {
 function initEmailJS() {
   if (window.emailjs && EMAILJS_PUBLIC_KEY && !EMAILJS_PUBLIC_KEY.includes('YOUR_')) {
     emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
-    console.log("EmailJS inicializado correctamente");
-  } else {
-    console.warn("EmailJS no disponible, se usará el código de respaldo");
+    console.log("EmailJS inicializado");
   }
 }
 async function sendRecoveryEmail(email, username, code, time) {
   if (!window.emailjs) return false;
   try {
-    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, { 
-      to_email: email, 
-      username: username, 
-      reset_code: code, 
-      time: time 
-    });
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, { to_email: email, username, reset_code: code, time });
     return true;
-  } catch(e) {
-    console.error("Error enviando correo:", e);
-    return false;
-  }
+  } catch(e) { console.error(e); return false; }
 }
 
 // ==================== AUTENTICACIÓN ====================
 async function iniciarSesion() {
-  const nombre = usernameInput.value.trim();
+  const nombreRaw = usernameInput.value.trim();
+  const nombre = nombreRaw.toLowerCase();
   const contrasena = passwordInput.value.trim();
   if (!nombre || !contrasena) return mostrarMensaje(authMessage, 'Ingresa usuario y contraseña.');
-  
   try {
     const doc = await db.collection("usuarios").doc(nombre).get();
-    if (doc.exists) {
-      const usuario = doc.data();
-      const hash = await hashPassword(contrasena);
-      if (usuario.passwordHash === hash) {
-        usuarioActual = nombre;
-        await cargarTasaCambio();
-        currentInventoryOwner = null;
-        currentPermission = "edit";
-        await mostrarApp(nombre);
-        mostrarMensaje(authMessage, `¡Bienvenido ${nombre}!`, '#16a34a');
-        return;
-      }
+    if (!doc.exists) return mostrarMensaje(authMessage, 'Usuario no existe.');
+    const usuario = doc.data();
+    const hashIngresado = await hashPassword(contrasena);
+    if (usuario.passwordHash === hashIngresado) {
+      usuarioActual = nombre;
+      await cargarTasaCambio();
+      currentInventoryOwner = null;
+      currentPermission = "edit";
+      await mostrarApp(nombre);
+      mostrarMensaje(authMessage, `¡Bienvenido ${nombre}!`, '#16a34a');
+    } else {
+      mostrarMensaje(authMessage, 'Contraseña incorrecta.');
     }
-    mostrarMensaje(authMessage, 'Usuario o contraseña incorrectos.');
   } catch(error) { mostrarMensaje(authMessage, 'Error: ' + error.message); }
 }
 
 async function registrarUsuario() {
-  const nombre = regUsername.value.trim();
+  const nombreRaw = regUsername.value.trim();
+  const nombre = nombreRaw.toLowerCase();
   const email = regEmail.value.trim().toLowerCase();
   const contrasena = regPassword.value.trim();
   if (!nombre || !email || !contrasena) return mostrarMensaje(regMessage, 'Completa todos los campos.');
@@ -507,22 +477,20 @@ async function registrarUsuario() {
   if (nombre === 'admin') return mostrarMensaje(regMessage, 'El nombre "admin" está reservado.');
   if (contrasena.length < 6) return mostrarMensaje(regMessage, 'La contraseña debe tener al menos 6 caracteres.');
   if (!validarEmail(email)) return mostrarMensaje(regMessage, 'Correo inválido.');
-  
   const userDoc = await db.collection("usuarios").doc(nombre).get();
   if (userDoc.exists) return mostrarMensaje(regMessage, 'El usuario ya existe.');
-  
   const emailCheck = await db.collection("usuarios").where("email", "==", email).get();
   if (!emailCheck.empty) return mostrarMensaje(regMessage, 'El correo ya está registrado.');
-  
-  const passwordHash = await hashPassword(contrasena);
-  await db.collection("usuarios").doc(nombre).set({ 
-    nombre, email, passwordHash, resetCodeHash: '', resetExpires: 0 
-  });
-  
-  await savePersonalInventory(nombre, []);
-  regUsername.value = ''; regEmail.value = ''; regPassword.value = '';
-  mostrarMensaje(regMessage, 'Registro exitoso. Ahora inicia sesión.', '#16a34a');
-  setTimeout(() => mostrarLoginForm(), 2000);
+  try {
+    const passwordHash = await hashPassword(contrasena);
+    await db.collection("usuarios").doc(nombre).set({ nombre, email, passwordHash, resetCodeHash: '', resetExpires: 0 });
+    await savePersonalInventory(nombre, []);
+    regUsername.value = ''; regEmail.value = ''; regPassword.value = '';
+    mostrarMensaje(regMessage, '✅ Registro exitoso. Ahora inicia sesión.', '#16a34a');
+    setTimeout(() => mostrarLoginForm(), 2000);
+  } catch(error) {
+    mostrarMensaje(regMessage, 'Error al guardar: ' + error.message, '#dc2626');
+  }
 }
 
 async function mostrarApp(nombre) {
@@ -532,27 +500,19 @@ async function mostrarApp(nombre) {
   appSection.classList.remove('hidden');
   loggedUserSpan.textContent = escapeHtml(nombre);
   ocultarSeccionesInternas();
-  
   if (nombre === 'admin') {
     adminPanelDiv.style.display = 'block';
     shareSectionDiv.style.display = 'none';
     inventorySelectorGroup.style.display = 'none';
     await cargarListaUsuariosAdmin();
-    
     document.getElementById('changeMasterPasswordBtn').onclick = async () => {
       const newPass = document.getElementById('newMasterPassword').value;
       const confirmPass = document.getElementById('confirmMasterPassword').value;
       const msgElement = document.getElementById('changeMasterMsg');
       if (!newPass || newPass.length < 4) return mostrarMensaje(msgElement, 'Mínimo 4 caracteres.', '#dc2626');
       if (newPass !== confirmPass) return mostrarMensaje(msgElement, 'No coinciden.', '#dc2626');
-      try {
-        await setMasterPassword(newPass);
-        mostrarMensaje(msgElement, '¡Contraseña maestra actualizada!', '#16a34a');
-        document.getElementById('newMasterPassword').value = '';
-        document.getElementById('confirmMasterPassword').value = '';
-      } catch (error) {
-        mostrarMensaje(msgElement, 'Error al guardar: ' + error.message, '#dc2626');
-      }
+      try { await setMasterPassword(newPass); mostrarMensaje(msgElement, '¡Contraseña maestra actualizada!', '#16a34a'); document.getElementById('newMasterPassword').value = ''; document.getElementById('confirmMasterPassword').value = ''; } 
+      catch(error) { mostrarMensaje(msgElement, 'Error: ' + error.message, '#dc2626'); }
     };
   } else {
     adminPanelDiv.style.display = 'none';
@@ -560,7 +520,6 @@ async function mostrarApp(nombre) {
     await actualizarSelectorInventarios();
   }
   actualizarUITituloInventario();
-  // Suscribirse al inventario actual
   const owner = currentInventoryOwner || usuarioActual;
   suscribirInventario(owner);
   await mostrarInventario();
@@ -613,7 +572,7 @@ function mostrarRecoveryForm() {
   authMessage.textContent = recoveryMessage.textContent = '';
 }
 
-// ==================== ADMIN ====================
+// ==================== ADMIN (LISTA Y ELIMINAR) ====================
 async function cargarListaUsuariosAdmin() {
   if (usuarioActual !== 'admin') return;
   userListAdminDiv.innerHTML = '<p>Cargando...</p>';
@@ -623,7 +582,13 @@ async function cargarListaUsuariosAdmin() {
   if (lista.length === 0) { userListAdminDiv.innerHTML = '<p>No hay otros usuarios.</p>'; return; }
   let html = '<ul style="list-style:none;padding-left:0;">';
   for (const user of lista) {
-    html += `<li style="margin-bottom:10px;display:flex;justify-content:space-between;"><strong>${escapeHtml(user.nombre)}</strong> (${escapeHtml(user.email)})<button class="admin-delete-btn" data-user="${escapeHtml(user.nombre)}" style="background:#dc2626;padding:6px 12px;color:white;border:none;border-radius:4px;cursor:pointer;">Eliminar</button></li>`;
+    html += `<li style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+              <strong>${escapeHtml(user.nombre)}</strong> (${escapeHtml(user.email)})
+              <div>
+                <button class="admin-view-btn" data-user="${escapeHtml(user.nombre)}" style="background:#3b82f6;padding:6px 12px;color:white;border:none;border-radius:4px;cursor:pointer;margin-right:5px;">👁️ Ver inventario</button>
+                <button class="admin-delete-btn" data-user="${escapeHtml(user.nombre)}" style="background:#dc2626;padding:6px 12px;color:white;border:none;border-radius:4px;cursor:pointer;">Eliminar</button>
+              </div>
+            </li>`;
   }
   html += '</ul>';
   userListAdminDiv.innerHTML = html;
@@ -635,6 +600,12 @@ async function cargarListaUsuariosAdmin() {
         await cargarListaUsuariosAdmin(); 
         mostrarMensaje(appMessage, `Usuario ${username} eliminado.`, '#16a34a'); 
       }
+    });
+  });
+  document.querySelectorAll('.admin-view-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const username = btn.getAttribute('data-user');
+      await adminViewInventory(username);
     });
   });
 }
@@ -747,7 +718,6 @@ inventorySelect.addEventListener('change', async () => {
     }
   }
   actualizarUITituloInventario();
-  // Cambiar suscripción al nuevo owner
   const owner = currentInventoryOwner || usuarioActual;
   suscribirInventario(owner);
   await mostrarInventario();
@@ -771,6 +741,7 @@ function actualizarUITituloInventario() {
 }
 
 async function esInventarioSoloLectura() {
+  if (usuarioActual === 'admin' && adminObservingUser !== null) return true;
   if (currentInventoryOwner !== null) await refreshCurrentPermission();
   return currentPermission !== 'edit';
 }
@@ -855,7 +826,6 @@ async function mostrarInventario() {
     }
     inventoryList.appendChild(div);
   });
-  
   if (!readonly) {
     const owner = currentInventoryOwner || usuarioActual;
     document.querySelectorAll('.inc').forEach(btn => btn.onclick = async () => {
@@ -919,6 +889,10 @@ async function mostrarInventario() {
 }
 
 async function guardarInventarioActual() {
+  if (adminObservingUser !== null) {
+    mostrarMensaje(appMessage, 'No puedes modificar el inventario de otro usuario.', '#dc2626');
+    return;
+  }
   if (currentInventoryOwner === null) await savePersonalInventory(usuarioActual, productos);
   else await savePersonalInventory(currentInventoryOwner, productos);
 }
@@ -954,10 +928,7 @@ sendRecoveryBtn.addEventListener('click', async () => {
   const codigo = generarCodigo();
   const expiresAt = Date.now() + 15*60*1000;
   const expirationTime = new Date(expiresAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  await docRef.update({
-    resetCodeHash: await hashString(codigo),
-    resetExpires: expiresAt
-  });
+  await docRef.update({ resetCodeHash: await hashString(codigo), resetExpires: expiresAt });
   resetArea.classList.remove('hidden');
   newPasswordArea.classList.remove('hidden');
   verifyBtnArea.classList.remove('hidden');
@@ -981,16 +952,12 @@ verifyCodeBtn.addEventListener('click', async () => {
     await docRef.update({ resetCodeHash: '', resetExpires: 0 });
     return mostrarMensaje(recoveryMessage, 'Código expirado.');
   }
-  await docRef.update({
-    passwordHash: await hashPassword(nuevaPass),
-    resetCodeHash: '',
-    resetExpires: 0
-  });
+  await docRef.update({ passwordHash: await hashPassword(nuevaPass), resetCodeHash: '', resetExpires: 0 });
   mostrarMensaje(recoveryMessage, '✅ Contraseña actualizada. Inicia sesión.', '#16a34a');
   mostrarLoginForm();
 });
 
-// ==================== EVENT LISTENERS ====================
+// ==================== EVENTOS ====================
 loginBtn.addEventListener('click', iniciarSesion);
 showRegisterBtn.addEventListener('click', mostrarRegisterForm);
 confirmRegisterBtn.addEventListener('click', registrarUsuario);
@@ -1004,22 +971,17 @@ cancelAddBtn.addEventListener('click', cancelarAgregar);
 showInventoryBtn.addEventListener('click', mostrarInventario);
 showSummaryBtn.addEventListener('click', mostrarResumen);
 exchangeRateInput.addEventListener('change', async () => { await guardarTasaCambio(); if (!summarySection.classList.contains('hidden')) await mostrarResumen(); });
-
-if (refreshUsersBtn) {
-  refreshUsersBtn.addEventListener('click', cargarListaUsuariosAdmin);
-}
-
+if (refreshUsersBtn) refreshUsersBtn.addEventListener('click', cargarListaUsuariosAdmin);
 notificationsBtn.addEventListener('click', async () => {
   if (notificationsPanel.classList.contains('hidden')) { await renderNotificationsPanel(); notificationsPanel.classList.remove('hidden'); }
   else notificationsPanel.classList.add('hidden');
 });
 
-// ==================== INICIALIZACIÓN UNIFICADA ====================
+// ==================== INICIALIZACIÓN ====================
 async function initApp() {
   initEmailJS();
   mostrarLoginForm();
   await cargarTasaCambio();
 }
 
-// Arrancar el flujo del modal
 handleMasterPasswordFlow();
