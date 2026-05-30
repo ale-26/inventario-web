@@ -18,7 +18,7 @@ let usuarioActual = null;
 let currentInventoryOwner = null;
 let currentPermission = "edit";
 let unsubscribeInventory = null;
-let adminObservingUser = null;   // modo admin observador
+let adminObservingUser = null;   // Nuevo: para modo observador del admin
 
 // DOM elements
 const authMessage = document.getElementById('authMessage');
@@ -91,7 +91,7 @@ const EMAILJS_SERVICE_ID = 'recuperacion';
 const EMAILJS_TEMPLATE_ID = 'template_fy0hmst';
 const EMAILJS_PUBLIC_KEY = 'izdpmjIVDCrGNcfGS';
 
-// ==================== MODAL MAESTRA ====================
+// ==================== MODAL CONTRASEÑA MAESTRA ====================
 const modalOverlay = document.getElementById('masterPasswordModal');
 const mainContent = document.getElementById('mainContent');
 const footer = document.getElementById('footer');
@@ -118,7 +118,10 @@ async function verifyMasterPassword(password) {
 async function handleMasterPasswordFlow() {
   await ensureAdminUser();
   const doc = await db.collection("config_sistema").doc("clave_maestra").get();
-  if (!doc.exists) await setMasterPassword('admin123');
+  if (!doc.exists) {
+    await setMasterPassword('admin123');
+    console.log('Clave maestra inicial: admin123');
+  }
   modalTitle.textContent = '🔐 Acceso restringido';
   modalMessage.textContent = 'Ingresa la contraseña maestra para continuar';
   masterPasswordInput.placeholder = 'Contraseña maestra';
@@ -159,7 +162,9 @@ function generateUniqueId() {
 }
 
 async function hashString(texto) {
-  if (!window.crypto || !window.crypto.subtle) throw new Error('Crypto API no disponible');
+  if (!window.crypto || !window.crypto.subtle) {
+    throw new Error('Crypto API no disponible.');
+  }
   const encoder = new TextEncoder();
   const data = encoder.encode(texto);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
@@ -220,6 +225,7 @@ function suscribirInventario(owner) {
   const docRef = db.collection("inventarios").doc(owner);
   unsubscribeInventory = docRef.onSnapshot((doc) => {
     if (doc.exists) {
+      // Actualizar solo si es el inventario que se está viendo actualmente
       if (adminObservingUser === owner || (!adminObservingUser && (currentInventoryOwner === owner || owner === usuarioActual))) {
         productos = doc.data().productos || [];
         if (!inventorySection.classList.contains('hidden')) mostrarInventario();
@@ -234,18 +240,22 @@ async function loadPersonalInventory(username) {
   return doc.exists ? doc.data().productos : [];
 }
 
-// ==================== ADMIN OBSERVADOR ====================
+// ==================== ADMIN OBSERVADOR (NUEVAS FUNCIONES) ====================
 async function adminViewInventory(username) {
   adminObservingUser = username;
-  currentInventoryOwner = null;
+  // Guardar el inventario del usuario
   productos = await loadPersonalInventory(username);
+  // Ocultar el panel de admin y colaboración
   adminPanelDiv.style.display = 'none';
   shareSectionDiv.style.display = 'none';
   inventorySelectorGroup.style.display = 'none';
+  // Mostrar sección de inventario
   inventorySection.classList.remove('hidden');
   summarySection.classList.add('hidden');
   addProductArea.classList.add('hidden');
+  // Cambiar título y agregar botón para volver
   inventoryTitle.innerHTML = `👁️ Inventario de ${escapeHtml(username)} (solo observación) <button id="exitAdminViewBtn" class="secondary" style="margin-left: 10px;">⬅️ Volver al panel admin</button>`;
+  // Suscribirse a los cambios en tiempo real de ese usuario
   suscribirInventario(username);
   await mostrarInventario();
   const exitBtn = document.getElementById('exitAdminViewBtn');
@@ -254,10 +264,13 @@ async function adminViewInventory(username) {
 
 function exitAdminView() {
   adminObservingUser = null;
+  // Restaurar el panel de administrador
   adminPanelDiv.style.display = 'block';
   shareSectionDiv.style.display = 'none';
   inventorySelectorGroup.style.display = 'none';
+  // Recargar la lista de usuarios (para que se vea de nuevo)
   cargarListaUsuariosAdmin();
+  // Limpiar productos y ocultar secciones
   productos = [];
   inventorySection.classList.add('hidden');
   summarySection.classList.add('hidden');
@@ -505,15 +518,19 @@ async function mostrarApp(nombre) {
     shareSectionDiv.style.display = 'none';
     inventorySelectorGroup.style.display = 'none';
     await cargarListaUsuariosAdmin();
-    document.getElementById('changeMasterPasswordBtn').onclick = async () => {
-      const newPass = document.getElementById('newMasterPassword').value;
-      const confirmPass = document.getElementById('confirmMasterPassword').value;
-      const msgElement = document.getElementById('changeMasterMsg');
-      if (!newPass || newPass.length < 4) return mostrarMensaje(msgElement, 'Mínimo 4 caracteres.', '#dc2626');
-      if (newPass !== confirmPass) return mostrarMensaje(msgElement, 'No coinciden.', '#dc2626');
-      try { await setMasterPassword(newPass); mostrarMensaje(msgElement, '¡Contraseña maestra actualizada!', '#16a34a'); document.getElementById('newMasterPassword').value = ''; document.getElementById('confirmMasterPassword').value = ''; } 
-      catch(error) { mostrarMensaje(msgElement, 'Error: ' + error.message, '#dc2626'); }
-    };
+    // Evento para cambiar contraseña maestra (ya existe en el HTML)
+    const changeMasterBtn = document.getElementById('changeMasterPasswordBtn');
+    if (changeMasterBtn) {
+      changeMasterBtn.onclick = async () => {
+        const newPass = document.getElementById('newMasterPassword').value;
+        const confirmPass = document.getElementById('confirmMasterPassword').value;
+        const msgElement = document.getElementById('changeMasterMsg');
+        if (!newPass || newPass.length < 4) return mostrarMensaje(msgElement, 'Mínimo 4 caracteres.', '#dc2626');
+        if (newPass !== confirmPass) return mostrarMensaje(msgElement, 'No coinciden.', '#dc2626');
+        try { await setMasterPassword(newPass); mostrarMensaje(msgElement, '¡Contraseña maestra actualizada!', '#16a34a'); document.getElementById('newMasterPassword').value = ''; document.getElementById('confirmMasterPassword').value = ''; } 
+        catch(error) { mostrarMensaje(msgElement, 'Error: ' + error.message, '#dc2626'); }
+      };
+    }
   } else {
     adminPanelDiv.style.display = 'none';
     await actualizarUICompartir();
@@ -572,14 +589,17 @@ function mostrarRecoveryForm() {
   authMessage.textContent = recoveryMessage.textContent = '';
 }
 
-// ==================== ADMIN (LISTA Y ELIMINAR) ====================
+// ==================== ADMIN (LISTA Y ELIMINAR) MODIFICADO ====================
 async function cargarListaUsuariosAdmin() {
   if (usuarioActual !== 'admin') return;
   userListAdminDiv.innerHTML = '<p>Cargando...</p>';
   const snapshot = await db.collection("usuarios").get();
   let lista = [];
   snapshot.forEach(d => { if(d.id !== 'admin') lista.push(d.data()); });
-  if (lista.length === 0) { userListAdminDiv.innerHTML = '<p>No hay otros usuarios.</p>'; return; }
+  if (lista.length === 0) {
+    userListAdminDiv.innerHTML = '<p>No hay otros usuarios.</p>';
+    return;
+  }
   let html = '<ul style="list-style:none;padding-left:0;">';
   for (const user of lista) {
     html += `<li style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
@@ -592,21 +612,25 @@ async function cargarListaUsuariosAdmin() {
   }
   html += '</ul>';
   userListAdminDiv.innerHTML = html;
+  
+  // Botones eliminar
   document.querySelectorAll('.admin-delete-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
+    btn.onclick = async () => {
       const username = btn.getAttribute('data-user');
-      if (confirm(`¿Eliminar a "${username}"?`)) { 
-        await eliminarUsuario(username); 
-        await cargarListaUsuariosAdmin(); 
-        mostrarMensaje(appMessage, `Usuario ${username} eliminado.`, '#16a34a'); 
+      if (confirm(`¿Eliminar a "${username}"?`)) {
+        await eliminarUsuario(username);
+        await cargarListaUsuariosAdmin();
+        mostrarMensaje(appMessage, `Usuario ${username} eliminado.`, '#16a34a');
       }
-    });
+    };
   });
+  
+  // Botones ver inventario
   document.querySelectorAll('.admin-view-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
+    btn.onclick = async () => {
       const username = btn.getAttribute('data-user');
       await adminViewInventory(username);
-    });
+    };
   });
 }
 
@@ -741,7 +765,9 @@ function actualizarUITituloInventario() {
 }
 
 async function esInventarioSoloLectura() {
+  // Si el admin está observando un inventario ajeno -> solo lectura
   if (usuarioActual === 'admin' && adminObservingUser !== null) return true;
+  // Comportamiento normal
   if (currentInventoryOwner !== null) await refreshCurrentPermission();
   return currentPermission !== 'edit';
 }
@@ -889,6 +915,7 @@ async function mostrarInventario() {
 }
 
 async function guardarInventarioActual() {
+  // Evitar que el admin guarde cambios cuando está observando
   if (adminObservingUser !== null) {
     mostrarMensaje(appMessage, 'No puedes modificar el inventario de otro usuario.', '#dc2626');
     return;
