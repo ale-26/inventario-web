@@ -461,23 +461,38 @@ async function iniciarSesion() {
   const nombreRaw = usernameInput.value.trim();
   const nombre = nombreRaw.toLowerCase();
   const contrasena = passwordInput.value.trim();
-  if (!nombre || !contrasena) return mostrarMensaje(authMessage, 'Ingresa usuario y contraseña.');
+  if(!nombre || !contrasena) return mostrarMensaje(authMessage, 'ingresa usuario y contraseña.');
   try {
-    const doc = await db.collection("usuarios").doc(nombre).get();
-    if (!doc.exists) return mostrarMensaje(authMessage, 'Usuario no existe.');
-    const usuario = doc.data();
+    let userDoc = await db.collection("usuarios").doc(nombre).get();
+    let usuario = null;
+    let userId = null;
+    if (userDoc.exists) {
+      usuario = userDoc.data();
+      userId = userDoc.id;
+    } else {
+      const snapshot = await db.collection("usuarios").where("email", "==", nombre).get();
+      if (!snapshot.empty) {
+        doc = snapshot.docs[0];
+        usuario = snapshot.docs[0].data();
+        userId = snapshot.docs[0].id;
+      }
+    }
+    if (!usuario) return mostrarMensaje(authMessage, 'Usuario no existe.');
+
     const hashIngresado = await hashPassword(contrasena);
     if (usuario.passwordHash === hashIngresado) {
-      usuarioActual = nombre;
-      await cargarTasaCambio();
+      // Iniciar sesión exitosa
+      usuarioActual = userId;
       currentInventoryOwner = null;
       currentPermission = "edit";
-      await mostrarApp(nombre);
-      mostrarMensaje(authMessage, `¡Bienvenido ${nombre}!`, '#16a34a');
-    } else {
+      await mostrarApp(usuarioActual);
+      mostrarMensaje(appMessage, '¡Bienvenido, ' + escapeHtml(usuarioActual) + '!', '#16a34a');
+    }else {
       mostrarMensaje(authMessage, 'Contraseña incorrecta.');
     }
-  } catch(error) { mostrarMensaje(authMessage, 'Error: ' + error.message); }
+  } catch(error) {
+    mostrarMensaje(authMessage, 'Error: ' + error.message);
+  }
 }
 
 async function registrarUsuario() {
