@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es-PE">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Inventario Perú - Sistema profesional de gestión de inventario en la nube. Controla tu inventario desde cualquier dispositivo con colaboración en tiempo real." />
+  <meta name="keywords" content="inventario, gestión, nube, colaboración, soles, USD, Perú" />
+  <meta name="theme-color" content="#2563eb" />
+  
+  <title>Inventario Perú - Gestión Inteligente de Inventario | Sistema en la Nube</title>
+  
+  <link rel="stylesheet" href="landing-style.css" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>" />
+</head>
+<body>
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="logo">
+        <span class="logo-icon">📦</span>
+        <span class="logo-text">Inventario Perú</span>
+      </div>
+      <div class="nav-links">
+        <a href="#features">Características</a>
+        <a href="#pricing">Precios</a>
+        <a href="#faq">Preguntas</a>
+        <a href="index.html" class="btn-nav">Acceder</a>
+      </div>
+      <button class="hamburger" id="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu hidden" id="mobileMenu">
+    <a href="#features">Características</a>
+    <a href="#pricing">Precios</a>
+    <a href="#faq">Preguntas</a>
+    <a href="index.html">Acceder al Sistema</a>
+  </div>
+
+  <!-- HERO SECTION -->
+  <section class="hero">
+    <div class="container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;">
+      <div class="hero-content">
+        <h1>Gestiona tu Inventario en la Nube</h1>
+        <p class="hero-subtitle">Sistema profesional de control de inventario con colaboración en tiempo real, historial completo y soporte multi-moneda.</p>
+        
+        <div class="hero-buttons">
+          <a href="index.html" class="btn btn-primary">Comenzar Gratis</a>
+          <a href="#features" class="btn btn-secondary">Ver Características</a>
+        </div>
+
+        <div class="hero-stats">
+          <div class="stat">
+            <div class="stat-number">1000+</div>
+            <div class="stat-label">Usuarios Activos</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number">50K+</div>
+            <div class="stat-label">Productos Gestionados</div>
+          </div>
+          <div class="stat">
+            <div class="stat-number">99.9%</div>
+            <div class="stat-label">Uptime Garantizado</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="hero-image">
+        <div class="mockup-frame">
+          <div class="mockup-header">
+            <span>📊 Panel de Control</span>
+          </div>
+          <div class="mockup-content">
+            <div class="mockup-item">
+              <span class="item-icon">📦</span>
+              <span>RO117 - Remera Azul</span>
+              <span class="item-price">S/ 45.50</span>
+            </div>
+            <div class="mockup-item">
+              <span class="item-icon">👕</span>
+              <span>PA223 - Pantalón Negro</span>
+              <span class="item-price">S/ 89.99</span>
+            </div>
+            <div class="mockup-item">
+              <span class="item-icon">👗</span>
+              <span>VT001 - Vestido Rojo</span>
+              <span class="item-price">S/ 120.00</span>
+            </div>
+            <div class="mockup-total">
+              <strong>Total:</strong> S/ 255.49
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES SECTION -->
+  <section id="features" class="features">
+    <div class="container">
+      <h2>Características Principales</h2>
+      <p class="section-subtitle">Todo lo que necesitas para gestionar tu inventario de forma profesional</p>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🔐</div>
+          <h3>Seguridad Garantizada</h3>
+          <p>Contraseña maestra + encriptación de datos. Tu inventario está protegido en todo momento.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">👥</div>
+          <h3>Colaboración en Equipo</h3>
+          <p>Invita colaboradores, asigna permisos de edición o lectura y trabaja en equipo sin conflictos.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">💰</div>
+          <h3>Multi-Moneda</h3>
+          <p>Calcula automáticamente precios en Soles (S/.) y USD. Tasa de cambio actualizable.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>Resumen de Totales</h3>
+          <p>Visualiza el valor total de tu inventario en tiempo real, tanto en soles como en dólares.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📜</div>
+          <h3>Historial Completo</h3>
+          <p>Cada cambio queda registrado. Sabe quién hizo qué, cuándo y por qué con trazabilidad total.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📱</div>
+          <h3>Responsive Design</h3>
+          <p>Accede desde computadora, tablet o móvil. Tu inventario siempre en tu bolsillo.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🔔</div>
+          <h3>Notificaciones</h3>
+          <p>Recibe alertas de invitaciones, cambios de permisos y actualizaciones del inventario.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3>Sincronización Automática</h3>
+          <p>Los cambios se guardan en tiempo real. Sin perder datos, sin conflictos de versiones.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how-it-works">
+    <div class="container">
+      <h2>¿Cómo Funciona?</h2>
+      <p class="section-subtitle">Solo 4 pasos para empezar a gestionar tu inventario</p>
+
+      <div class="steps-grid">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>Registrate Gratis</h3>
+          <p>Crea tu cuenta con usuario, correo y contraseña. Acceso inmediato al panel.</p>
+        </div>
+
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>Agrega Productos</h3>
+          <p>Ingresa código, precio (S/.) y cantidad. Puedes agregar múltiples productos a la vez.</p>
+        </div>
+
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>Invita Colaboradores</h3>
+          <p>Comparte tu inventario con tu equipo. Asigna permisos de edición o solo lectura.</p>
+        </div>
+
+        <div class="step">
+          <div class="step-number">4</div>
+          <h3>Monitorea en Tiempo Real</h3>
+          <p>Ve el historial de cambios, totales actualizados y notificaciones de tu equipo.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING SECTION -->
+  <section id="pricing" class="pricing">
+    <div class="container">
+      <h2>Planes de Precios</h2>
+      <p class="section-subtitle">Elige el plan que mejor se ajuste a tus necesidades</p>
+
+      <div class="pricing-grid">
+        <!-- PLAN GRATIS -->
+        <div class="pricing-card">
+          <div class="plan-name">Gratis</div>
+          <div class="plan-price">S/ 0<span>/mes</span></div>
+          <div class="plan-description">Perfecto para empezar</div>
+          
+          <ul class="plan-features">
+            <li>✅ Hasta 100 productos</li>
+            <li>✅ 1 usuario</li>
+            <li>✅ Histórico de 3 meses</li>
+            <li>✅ Soporte por email</li>
+            <li>❌ Colaboradores</li>
+            <li>❌ Exportar datos</li>
+          </ul>
+          
+          <a href="index.html" class="btn btn-outline">Comenzar Ahora</a>
+        </div>
+
+        <!-- PLAN PRO -->
+        <div class="pricing-card featured">
+          <div class="plan-badge">MÁS POPULAR</div>
+          <div class="plan-name">Pro</div>
+          <div class="plan-price">S/ 29<span>/mes</span></div>
+          <div class="plan-description">Para pequeños negocios</div>
+          
+          <ul class="plan-features">
+            <li>✅ Hasta 5,000 productos</li>
+            <li>✅ Hasta 10 usuarios</li>
+            <li>✅ Histórico ilimitado</li>
+            <li>✅ Soporte prioritario</li>
+            <li>✅ Colaboradores con permisos</li>
+            <li>✅ Exportar a CSV</li>
+          </ul>
+          
+          <a href="index.html" class="btn btn-primary">Comienza Prueba Gratis</a>
+        </div>
+
+        <!-- PLAN EMPRESARIAL -->
+        <div class="pricing-card">
+          <div class="plan-name">Empresarial</div>
+          <div class="plan-price">Personalizado</div>
+          <div class="plan-description">Para grandes operaciones</div>
+          
+          <ul class="plan-features">
+            <li>✅ Productos ilimitados</li>
+            <li>✅ Usuarios ilimitados</li>
+            <li>✅ Histórico ilimitado</li>
+            <li>✅ Soporte 24/7 dedicado</li>
+            <li>✅ API personalizada</li>
+            <li>✅ Integración customizada</li>
+          </ul>
+          
+          <a href="#contact" class="btn btn-outline">Contactar Ventas</a>
+        </div>
+      </div>
+
+      <div class="pricing-note">
+        <p>✨ Todos los planes incluyen: seguridad garantizada, respaldo automático de datos y acceso desde cualquier dispositivo.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="testimonials">
+    <div class="container">
+      <h2>Lo que Dicen Nuestros Usuarios</h2>
+      <p class="section-subtitle">Conoce las experiencias de nuestros clientes satisfechos</p>
+
+      <div class="testimonials-grid">
+        <div class="testimonial-card">
+          <div class="stars">⭐⭐⭐⭐⭐</div>
+          <p>"Inventario Perú cambió la forma en que gestionamos nuestro stock. Ahora mi equipo trabaja sincronizado y no hay errores."</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">JM</div>
+            <div>
+              <div class="author-name">Juan Martínez</div>
+              <div class="author-title">Gerente de Tienda - Textilería Lima</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="stars">⭐⭐⭐⭐⭐</div>
+          <p>"Súper fácil de usar. En 10 minutos ya tenía mi inventario cargado. El soporte es muy responsivo."</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">SC</div>
+            <div>
+              <div class="author-name">Sandra Córdova</div>
+              <div class="author-title">Dueña - Boutique Arequipa</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="stars">⭐⭐⭐⭐⭐</div>
+          <p>"La colaboración en tiempo real es increíble. Mis vendedores pueden ver el inventario actualizado desde sus móviles."</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">RC</div>
+            <div>
+              <div class="author-name">Roberto Quispe</div>
+              <div class="author-title">Comerciante - Cusco</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ SECTION -->
+  <section id="faq" class="faq">
+    <div class="container">
+      <h2>Preguntas Frecuentes</h2>
+      <p class="section-subtitle">Respuestas a las dudas más comunes</p>
+
+      <div class="faq-grid">
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>¿Mis datos están seguros?</span>
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer hidden">
+            <p>Sí, utilizamos encriptación de datos, contraseña maestra adicional y guardamos todo en servidores seguros de Firebase con respaldo automático diario.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>¿Puedo cambiar el plan en cualquier momento?</span>
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer hidden">
+            <p>Claro, puedes cambiar o cancelar tu plan cuando quieras sin penalización. Si cambias a un plan superior, se ajusta proporcionalmente.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>¿Cómo recupero mi contraseña?</span>
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer hidden">
+            <p>Usa la opción "¿Olvidaste tu contraseña?" en el login. Te enviaremos un código de 6 dígitos a tu correo para restablecerla.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>¿Puedo descargar mis datos?</span>
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer hidden">
+            <p>Sí, en el plan Pro y superior puedes exportar tu inventario a CSV. También todos tus datos están siempre disponibles en tu cuenta.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>¿Qué soporte ofrecen?</span>
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer hidden">
+            <p>Ofrecemos soporte por email en 24 horas. Plan Pro tiene soporte prioritario. Plan Empresarial incluye soporte 24/7 dedicado.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>¿Necesito instalar algo?</span>
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer hidden">
+            <p>No, todo funciona en la nube. Solo accede desde tu navegador web desde cualquier computadora, tablet o móvil. Sin instalaciones.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA SECTION -->
+  <section class="cta">
+    <div class="container">
+      <h2>¿Listo para Controlar tu Inventario?</h2>
+      <p>Comienza hoy gratis. Sin tarjeta de crédito. Acceso inmediato.</p>
+      <a href="index.html" class="btn btn-primary btn-large">Acceder Ahora Gratis</a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <div class="footer-logo">
+            <span class="logo-icon">📦</span>
+            <span>Inventario Perú</span>
+          </div>
+          <p>Solución profesional de gestión de inventario en la nube para negocios peruanos.</p>
+        </div>
+
+        <div class="footer-section">
+          <h4>Navegación</h4>
+          <ul>
+            <li><a href="#features">Características</a></li>
+            <li><a href="#pricing">Precios</a></li>
+            <li><a href="#faq">Preguntas</a></li>
+            <li><a href="index.html">Acceder</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h4>Legales</h4>
+          <ul>
+            <li><a href="privacy.html">Privacidad</a></li>
+            <li><a href="terms.html">Términos de Servicio</a></li>
+            <li><a href="#contact">Contacto</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h4>Contacto</h4>
+          <p>📧 soporte@inventario.pe</p>
+          <p>📱 +51 999 999 999</p>
+          <p>🌐 Lima, Perú</p>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2026 Inventario Perú. Todos los derechos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="landing-script.js"></script>
+</body>
+</html>
